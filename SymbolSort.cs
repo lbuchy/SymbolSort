@@ -557,7 +557,7 @@ namespace SymbolSort
         {
             Regex regexName = new Regex(@"\n[ \t]*([^ \t]+)[ \t]+name");
             Regex regexSize = new Regex(@"\n[ \t]*([A-Za-z0-9]+)[ \t]+size of raw data");
-            Regex regexCOMDAT = new Regex(@"\n[ \t]*COMDAT; sym= \""([^\n\""]+)");
+            Regex regexCOMDAT = new Regex(@"\n[ \t]*COMDAT; sym= \""([^\n\""]+)\"" \(([^\n()]+)\)");
 
             StreamReader reader = new StreamReader(inFilename);
 
@@ -604,6 +604,7 @@ namespace SymbolSort
 
                         m = regexCOMDAT.Match(record);
                         symbol.name = m.Groups[1].Value;
+                        symbol.raw_name = m.Groups[2].Value;
                         if (symbol.name != "")
                         {
                             symbol.rva_start = 0;
