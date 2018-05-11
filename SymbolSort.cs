@@ -717,10 +717,20 @@ namespace SymbolSort
                         symbol.raw_name = m.Groups[2].Value;
                         if (symbol.name != "")
                         {
+                            StringBuilder undecBuilder = new StringBuilder(1024);
+                            int err = dbghelp.UnDecorateSymbolName(
+                                symbol.raw_name, undecBuilder, undecBuilder.Capacity,
+                                dbghelp.UnDecorateFlags.UNDNAME_32_BIT_DECODE |         //not sure if it is necessary
+                                dbghelp.UnDecorateFlags.UNDNAME_NAME_ONLY               //drops arguments and return type
+                                //dbghelp.UnDecorateFlags.UNDNAME_NO_ARGUMENTS          //beware: disables unmangling completely!
+                                //it seems that all other flags do NOT work
+                            );
+                            string undecoratedName = err > 0 ? undecBuilder.ToString() : null;
+
                             symbol.rva_start = 0;
                             symbol.rva_end = 0;
                             symbol.source_filename = curSourceFilename;
-                            symbol.short_name = symbol.name;
+                            symbol.short_name = undecoratedName != null ? undecoratedName : symbol.name;
                             m = regexName.Match(record);
                             symbol.section = m.Groups[1].Value;
 
