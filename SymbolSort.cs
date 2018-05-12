@@ -2020,6 +2020,22 @@ namespace SymbolSort
                     return path.Split("/\\".ToCharArray());
                 }, "\\");
 
+            Console.WriteLine("Building class and namespace stats...");
+            writer.WriteLine("Namespaces and classes Contributions");
+            writer.WriteLine("--------------------------------------");
+            DumpFolderStats(writer, symbols, maxCount, differenceFiles.Any(),
+                delegate (Symbol s)
+                {
+                    string n = s.short_name;
+                    n = ExtractGroupedSubstrings(n, '<', '>', "T");
+                    string[] parts = MainClassPathGetter.Run(n);
+                    if (parts == null || parts.Length == 0) {
+                        return new string[] { "[unknown]" };
+                    }
+                    parts = new string[] { "." }.Concat(parts.Take(parts.Length - 1)).ToArray();
+                    return parts;
+                }, "::");
+
             Console.WriteLine("Computing section stats...");
             writer.WriteLine("Merged Sections / Types");
             DumpMergedSymbols(
