@@ -193,8 +193,9 @@ namespace SymbolSort
         PublicSymbol    = 0x008,
         Section         = 0x010,
         Unmapped        = 0x020,
-        Weak            = 0x040
-     };
+        Weak            = 0x040,
+        SourceApprox    = 0x080,    //source filename of this function is not precise
+    };
 
     class Symbol
     {
@@ -241,10 +242,12 @@ namespace SymbolSort
     {
         public string       filename;
         public InputType    type;
+        public bool         info;  //parse file but exclude it from stats
         public InputFile(string filename, InputType type)
         {
             this.filename = filename;
             this.type = type;
+            this.info = false;
         }
     }
 
@@ -1105,6 +1108,7 @@ namespace SymbolSort
                             {
                                 IDiaSectionContrib sectionContrib = FindSectionContribForRVA(symbol.rva_start, sectionContribs);
                                 symbol.source_filename = sectionContrib == null ? "" : compilandFileMap[sectionContrib.compilandId];
+                                symbol.flags |= SymbolFlags.SourceApprox;
                             }
                             symbol.section = "code";
                             symbol.flags |= SymbolFlags.Function;
@@ -1723,6 +1727,12 @@ namespace SymbolSort
                     {
                         inputFiles.Add(new InputFile(args[++curArg], InputType.nm_bsd));
                     }
+                    else if (curArgStr == "-info")
+                    {
+                        var infile = new InputFile(args[++curArg], InputType.pdb);
+                        infile.info = true;
+                        inputFiles.Add(infile);
+                    }
                     else if (curArgStr == "-out")
                     {
                         outFilename = args[++curArg];
@@ -1916,6 +1926,7 @@ namespace SymbolSort
             List<Symbol> symbols = new List<Symbol>();
             foreach (InputFile inputFile in inputFiles)
             {
+                if (inputFile.info) continue;
                 LoadSymbols(inputFile, symbols, searchPath, options);
                 Console.WriteLine();
             }
@@ -1946,6 +1957,38 @@ namespace SymbolSort
                         }
                         return false;
                     });
+            }
+
+            List<InputFile> infoPdb = inputFiles.FindAll(f => f.info && f.type == InputType.pdb);
+            if (infoPdb.Count() > 0)
+            {
+                var infoSymbols = new List<Symbol>();
+                foreach (InputFile f in infoPdb)
+                    LoadSymbols(f, infoSymbols, searchPath, options);
+                var infoDict = new Dictionary<string, Symbol>();
+                foreach (Symbol s in infoSymbols)
+                    if (s.raw_name != null)
+                        if (!infoDict.ContainsKey(s.raw_name))
+                        {
+                            infoDict.Add(s.raw_name, s);
+                            if ((s.flags & SymbolFlags.SourceApprox) != 0)
+                                s.source_filename = "[unclear_source]";
+                        }
+
+                Console.WriteLine("Connecting symbols to PDB info...");
+                int connectedCnt = 0, allCnt = symbols.Count;
+                foreach (Symbol s in symbols)
+                {
+                    Symbol info;
+                    if (infoDict.TryGetValue(s.raw_name, out info))
+                    {
+                        connectedCnt++;
+                        s.source_filename = info.source_filename;
+                    }
+                    else
+                        s.source_filename = "[not_in_pdb]";
+                }
+                Console.WriteLine("Connected {0}% symbols ({1}/{2})", (uint)(100.0 * connectedCnt / allCnt), connectedCnt, allCnt);
             }
 
             Console.WriteLine("Processing raw symbols...");
