@@ -443,16 +443,23 @@ namespace SymbolSort
                 }
             };
 
-            process.Start();
-            string output = process.StandardOutput.ReadToEnd();
-            System.Threading.Thread.Sleep(50);  //just to be sure
-            Debug.Assert(process.HasExited);
+            try
+            {
+                process.Start();
+                string output = process.StandardOutput.ReadToEnd();
+                System.Threading.Thread.Sleep(50);  //just to be sure
+                Debug.Assert(process.HasExited);
 
-            //postprocess output
-            string[] lines = output.Split("\r\n".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
-            Debug.Assert(lines.Length == symbols.Length);
+                //postprocess output
+                string[] lines = output.Split("\r\n".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+                Debug.Assert(lines.Length == symbols.Length);
 
-            return lines;
+                return lines;
+            }
+            catch
+            {
+                return new string[symbols.Length];
+            }
         }
 
         private static void ParseBsdSymbol(string line, out Symbol symbol)
