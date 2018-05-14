@@ -1861,7 +1861,7 @@ namespace SymbolSort
             {
                 var infoSymbols = new List<Symbol>();
                 foreach (InputFile f in infoPdb)
-                    LoadSymbols(f, infoSymbols, searchPath, options);
+                    LoadSymbols(f, infoSymbols, searchPath, options | Options.KeepRedundantSymbols);
                 var infoDict = new Dictionary<string, Symbol>();
                 foreach (Symbol s in infoSymbols)
                     if (s.raw_name != null)
