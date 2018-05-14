@@ -379,6 +379,7 @@ namespace SymbolSort
                 if (short_name.EndsWith(rttiDescr))
                 {
                     string[] res = Run(short_name.Substring(0, short_name.Length - rttiDescr.Length));
+                    if (res == null) return null;
                     return res.Concat(new string[] { rttiDescr.Substring(1) }).ToArray();
                 }
 
