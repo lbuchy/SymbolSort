@@ -382,6 +382,7 @@ namespace SymbolSort
                 if (short_name.EndsWith(rttiDescr))
                 {
                     string[] res = Run(short_name.Substring(0, short_name.Length - rttiDescr.Length));
+                    if (res == null) return null;
                     return res.Concat(new string[] { rttiDescr.Substring(1) }).ToArray();
                 }
 
@@ -454,7 +455,9 @@ namespace SymbolSort
                 Debug.Assert(process.HasExited);
 
                 //postprocess output
-                string[] lines = output.Split("\r\n".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+                string[] lines = output.Split(new string[] { "\r\n" }, StringSplitOptions.None);
+                if (lines.Length > symbols.Length && lines.Skip(symbols.Length).All(x => x == ""))
+                    lines = lines.Take(symbols.Length).ToArray();
                 Debug.Assert(lines.Length == symbols.Length);
 
                 return lines;
