@@ -159,7 +159,12 @@ namespace Dia2Lib
         [FieldOffset(36)]
         public DataSectionFlags Characteristics;
 
-        public string Name => Encoding.UTF8.GetString(ShortName).TrimEnd('\0');
+        public string Name {
+            get
+            {
+                return Encoding.UTF8.GetString(ShortName).TrimEnd('\0');
+            }
+        }
     }
 
     // This class is a specialization of IDiaEnumDebugStreamData.
